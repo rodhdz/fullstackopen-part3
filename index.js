@@ -1,6 +1,8 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
+const Person = require('./models/person.js')
 const app = express()
 app.use(express.static('dist'))
 app.use(cors())
@@ -32,32 +34,36 @@ let persons = [
 ]
 
 app.get('/info', (request, response) => {
-    const now = Date()
-    const message = `
-    <!DOCTYPE html>
-    <html>
-      <head><title>My HTML Response</title></head>
-      <body>
-        <p> Phonebook has info for ${persons.length} people</p>
-        <p>${now}</p>
-      </body>
-    </html>`
-    response.send(message)
+    Person.countDocuments({})
+        .then(count => {
+            const now = new Date();
+            const message = `
+            <!DOCTYPE html>
+            <html>
+              <head><title>Phonebook Info</title></head>
+              <body>
+                <p>Phonebook has info for ${count} people</p>
+                <p>${now}</p>
+              </body>
+            </html>`;
+            response.send(message);
+        })
+        .catch(error => {
+            console.error('Error counting documents', error.message);
+            response.status(500).send('Error retrieving info');
+        });
 })
 
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
-})
+    Person.find({}).then(person => {
+        response.json(person)
+    })
 
-const generateId = () => {
-    const min = 1
-    const max = 10000
-    const id = Math.floor(Math.random() * (max - min + 1) + min)
-    return id
-}
+})
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
+    let isPerson
 
     if (!body.name) {
         return response.status(400).json({
@@ -71,32 +77,35 @@ app.post('/api/persons', (request, response) => {
         })
     }
 
-    if (persons.find(person => person.name === body.name)) {
-        return response.status(400).json({
-            error: "name must be unique",
+    Person.find({ name: body.name })
+        .then(result => {
+            result.forEach(person => {
+                console.log("Se encontró a la persona: ", person.name)
+                isPerson = true
+            })
+            console.log("Existe la persona ", isPerson)
         })
-    }
-
-    const person = {
-        "id": generateId(),
-        "name": body.name,
-        "number": body.number
-    }
-
-    persons = persons.concat(person)
-
-    response.json(person)
+        .then(result => {
+            if (!isPerson) {
+                const person = new Person({
+                    "name": body.name,
+                    "number": body.number
+                })
+                person.save().then(savedPerson => {
+                    response.json(savedPerson)
+                })
+            } else {
+                return response.status(400).json({
+                    error: "name must be unique",
+                })
+            }
+        })
 })
 
 app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
-
-    if (person) {
-        response.json(person)
-    } else {
-        response.status(404).end()
-    }
+    Person.findById(request.params.id)
+        .then(person => { response.json(person) })
+        .catch(error => { response.status(404).end() })
 })
 
 app.delete('/api/persons/:id', (request, response) => {
@@ -106,7 +115,7 @@ app.delete('/api/persons/:id', (request, response) => {
     response.status(204).end()
 })
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
