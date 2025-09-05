@@ -62,7 +62,6 @@ app.post('/api/persons', (request, response, next) => {
                 console.log("Se encontró a la persona: ", person.name)
                 isPerson = true
             })
-            console.log("Existe la persona ", isPerson)
         })
         .then(result => {
             if (!isPerson) {
@@ -74,7 +73,7 @@ app.post('/api/persons', (request, response, next) => {
                     .then(savedPerson => {
                         response.json(savedPerson)
                     })
-                    .catch(error => console.log(error))
+                    .catch(error => next(error))
             } else {
                 return response.status(400).json({
                     error: "name must be unique",
