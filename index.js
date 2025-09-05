@@ -70,9 +70,11 @@ app.post('/api/persons', (request, response, next) => {
                     "name": body.name,
                     "number": body.number
                 })
-                person.save().then(savedPerson => {
-                    response.json(savedPerson)
-                })
+                person.save()
+                    .then(savedPerson => {
+                        response.json(savedPerson)
+                    })
+                    .catch(error => console.log(error))
             } else {
                 return response.status(400).json({
                     error: "name must be unique",
