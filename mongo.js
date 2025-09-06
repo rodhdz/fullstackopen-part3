@@ -42,7 +42,7 @@ if (isConsult) {
         name: process.argv[3],
         number: process.argv[4],
     })
-    person.save().then(result => {
+    person.save().then(() => {
         console.log(`added ${process.argv[3]} number ${process.argv[4]} to phonebook`)
         mongoose.connection.close()
     })

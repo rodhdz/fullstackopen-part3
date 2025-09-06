@@ -7,7 +7,7 @@ const app = express()
 app.use(express.static('dist'))
 app.use(cors())
 app.use(express.json())
-morgan.token('data', (req, res) => JSON.stringify(req.body))
+morgan.token('data', (req) => JSON.stringify(req.body))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :data '))
 
 
@@ -63,7 +63,7 @@ app.post('/api/persons', (request, response, next) => {
                 isPerson = true
             })
         })
-        .then(result => {
+        .then(() => {
             if (!isPerson) {
                 const person = new Person({
                     "name": body.name,
@@ -86,12 +86,12 @@ app.post('/api/persons', (request, response, next) => {
 app.get('/api/persons/:id', (request, response) => {
     Person.findById(request.params.id)
         .then(person => { response.json(person) })
-        .catch(error => { response.status(404).end() })
+        .catch(() => { response.status(404).end() })
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {
     Person.findByIdAndDelete(request.params.id)
-        .then(person => {
+        .then(() => {
             response.status(204).end()
         })
         .catch(error => next(error))
